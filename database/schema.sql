@@ -164,4 +164,70 @@ ON DUPLICATE KEY UPDATE name=VALUES(name);
 -- admin login: admin@alirsyad.sch.id / admin123 (bcrypt hash)
 INSERT INTO users (name, email, password, role) VALUES
 ('Administrator','admin@alirsyad.sch.id','$2b$10$wLQZzP3m8Qe8w4eOxQe8zu7Y9Qe8w4eOxQe8zu7Y9Qe8w4eOxQe8zu','admin')
+-- Generated migration advanced (stock_opname, depreciation, notifications, audit)
+CREATE TABLE IF NOT EXISTS stock_opnames (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  unit_id INT NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  opname_date DATE NOT NULL,
+  status ENUM('draft','dalam_proses','selesai') DEFAULT 'draft',
+  total_expected INT DEFAULT 0,
+  total_counted INT DEFAULT 0,
+  total_missing INT DEFAULT 0,
+  created_by INT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (unit_id) REFERENCES units(id),
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS stock_opname_items (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  opname_id INT NOT NULL,
+  asset_id INT NOT NULL,
+  expected_qty INT DEFAULT 1,
+  counted_qty INT DEFAULT 0,
+  result ENUM('ada','hilang','rusak_ringan','rusak_berat') NOT NULL,
+  note TEXT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (opname_id) REFERENCES stock_opnames(id) ON DELETE CASCADE,
+  FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS depreciation_policies (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  category_id INT NOT NULL,
+  unit_id INT NULL,
+  method ENUM('garis_lurus','straight_line') DEFAULT 'garis_lurus',
+  useful_life_years INT DEFAULT 5,
+  residual_percent DECIMAL(5,2) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
+  FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE SET NULL,
+  UNIQUE KEY uq_category_unit (category_id, unit_id)
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  type VARCHAR(50) NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  message TEXT NULL,
+  link VARCHAR(255) NULL,
+  is_read TINYINT(1) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NULL,
+  action VARCHAR(50) NOT NULL,
+  entity VARCHAR(100) NOT NULL,
+  entity_id INT NULL,
+  detail LONGTEXT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
 ON DUPLICATE KEY UPDATE name=VALUES(name);

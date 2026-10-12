@@ -1,6 +1,8 @@
 const express = require('express');
 const db = require('../config/db');
 const { auth, adminOnly, operatorOrAdmin, scopeUnit } = require('../middleware/auth');
+const { logAudit } = require('../helpers/audit');
+const { notifyAdmins, notifyUser } = require('../helpers/notify');
 const router = express.Router();
 router.use(auth());
 router.use(scopeUnit);
@@ -51,8 +53,15 @@ router.post('/', operatorOrAdmin, async (req, res) => {
       await db.query("UPDATE disposals SET approved_by=?, approved_at=NOW() WHERE id=?", [req.user.id, r.insertId]);
       const newCond = reason === 'hilang' ? 'hilang' : 'rusak_berat';
       await db.query("UPDATE assets SET status='dihapus', `condition`=? WHERE id=?", [newCond, asset_id]);
+      await logAudit(req, 'delete', 'disposal', r.insertId, { asset_id, reason, via: 'admin_direct' });
       return res.json({ message: 'Aset dihapus' });
     }
+    await logAudit(req, 'create', 'disposal', r.insertId, { asset_id, reason, status: 'pending' });
+    await notifyAdmins(req.user.id, {
+      title: 'Pengajuan penghapusan menunggu persetujuan',
+      message: `${req.user.name} mengajukan penghapusan aset #${asset_id} (${reason})`,
+      type: 'approval', link: '/hapus'
+    });
     res.json({ message: 'Pengajuan penghapusan dikirim, menunggu persetujuan admin' });
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
@@ -65,6 +74,14 @@ router.post('/:id/approve', adminOnly, async (req, res) => {
     await db.query("UPDATE disposals SET status='approved', approved_by=?, approved_at=NOW() WHERE id=?", [req.user.id, d.id]);
     const newCond = d.reason === 'hilang' ? 'hilang' : 'rusak_berat';
     await db.query("UPDATE assets SET status='dihapus', `condition`=? WHERE id=?", [newCond, d.asset_id]);
+    await logAudit(req, 'approve', 'disposal', d.id, { asset_id: d.asset_id, reason: d.reason });
+    if (d.created_by) {
+      await notifyUser(d.created_by, {
+        title: 'Penghapusan disetujui',
+        message: `Penghapusan aset #${d.asset_id} disetujui ${req.user.name}`,
+        type: 'approval', link: '/hapus'
+      });
+    }
     res.json({ message: 'Penghapusan disetujui, aset berstatus dihapus' });
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
@@ -75,6 +92,14 @@ router.post('/:id/reject', adminOnly, async (req, res) => {
     if (!d) return res.status(404).json({ message: 'Tidak ditemukan' });
     if (d.status !== 'pending') return res.status(400).json({ message: 'Sudah diproses' });
     await db.query("UPDATE disposals SET status='rejected', approved_by=?, approved_at=NOW() WHERE id=?", [req.user.id, d.id]);
+    await logAudit(req, 'reject', 'disposal', d.id, { asset_id: d.asset_id });
+    if (d.created_by) {
+      await notifyUser(d.created_by, {
+        title: 'Penghapusan ditolak',
+        message: `Penghapusan aset #${d.asset_id} ditolak ${req.user.name}`,
+        type: 'approval', link: '/hapus'
+      });
+    }
     res.json({ message: 'Penghapusan ditolak' });
   } catch (e) { res.status(500).json({ message: e.message }); }
 });

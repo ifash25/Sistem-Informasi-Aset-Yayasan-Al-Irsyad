@@ -56,6 +56,29 @@ button.info { background: #1d4ed8; }
 .login-box h1 { font-size: 20px; margin-bottom: 6px; color: #0f766e; }
 .login-box input, .login-box button { width: 100%; margin-top: 10px; }
 .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; background: #e2e8f0; }
+.badge.ok { background: #dcfce7; color: #166534; }
+.badge.warn { background: #fef3c7; color: #92400e; }
+.badge.danger { background: #fee2e2; color: #991b1b; }
+.tabbar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.tabbar button { background: #e2e8f0; color: #334155; display: inline-flex; align-items: center; gap: 6px; }
+.tabbar button.active { background: #0f766e; color: #fff; }
+/* Notifikasi lonceng */
+.notif { position: relative; margin-left: auto; }
+.notif-btn { background: rgba(255,255,255,.15); color: #fff; border-radius: 8px; padding: 7px 9px; display: inline-flex; position: relative; }
+.notif-btn:hover { background: rgba(255,255,255,.28); }
+.notif-badge { position: absolute; top: -5px; right: -5px; background: #dc2626; color: #fff; font-size: 10px; font-weight: 700; border-radius: 10px; padding: 1px 5px; min-width: 16px; }
+.notif-panel { position: absolute; top: calc(100% + 8px); right: 0; width: 320px; max-width: 82vw; background: #fff; color: #0f172a; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.3); z-index: 60; overflow: hidden; }
+.notif-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+.notif-head button { font-size: 12px; padding: 5px 9px; }
+.notif-list { max-height: 340px; overflow-y: auto; }
+.notif-item { display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; background: #fff; color: #0f172a; padding: 10px 12px; border-bottom: 1px solid #f1f5f9; border-radius: 0; }
+.notif-item:hover { background: #f8fafc; }
+.notif-item.unread { background: #f0fdfa; }
+.notif-item.unread strong { color: #0f766e; }
+.notif-item strong { font-size: 13px; }
+.notif-item span { font-size: 12px; color: #475569; }
+.notif-item small { font-size: 11px; color: #94a3b8; }
+.notif-empty { padding: 18px; text-align: center; color: #94a3b8; font-size: 13px; }
 .modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.55); display: grid; place-items: center; z-index: 50; padding: 16px; }
 .modal { background: #fff; border-radius: 14px; width: min(760px, 96vw); max-height: 90vh; overflow: auto; padding: 20px; }
 .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }

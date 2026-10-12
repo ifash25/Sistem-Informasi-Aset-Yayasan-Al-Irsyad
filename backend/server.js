@@ -18,6 +18,10 @@ app.use('/api/mutations', require('./routes/mutations'));
 app.use('/api/disposals', require('./routes/disposals'));
 app.use('/api/procurements', require('./routes/procurements'));
 app.use('/api/dashboard', require('./routes/dashboard'));
+app.use('/api/stockopname', require('./routes/stockopname'));
+app.use('/api/depreciation', require('./routes/depreciation'));
+app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/audit', require('./routes/audit'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Backend jalan di http://localhost:${PORT}`));

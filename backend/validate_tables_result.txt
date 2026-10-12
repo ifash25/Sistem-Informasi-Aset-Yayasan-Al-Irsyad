@@ -1,0 +1,15 @@
+assets
+audit_logs
+categories
+depreciation_policies
+disposals
+locations
+maintenances
+mutations
+notifications
+procurement_items
+procurements
+stock_opname_items
+stock_opnames
+units
+users

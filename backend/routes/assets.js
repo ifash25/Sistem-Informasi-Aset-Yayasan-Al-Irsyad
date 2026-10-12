@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const db = require('../config/db');
 const { auth, scopeUnit, operatorOrAdmin } = require('../middleware/auth');
+const { logAudit } = require('../helpers/audit');
 
 const router = express.Router();
 router.use(auth());
@@ -133,6 +134,7 @@ router.post('/', operatorOrAdmin, upload.single('photo'), async (req, res) => {
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
       [asset_code, name, category_id, unit_id, location_id || null, brand || null, serial_number || null, purchase_year || null, purchase_price || 0, condition || 'baik', photo, description || null]
     );
+    await logAudit(req, 'create', 'asset', r.insertId, { asset_code, name, unit_id });
     res.json({ id: r.insertId, asset_code });
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
@@ -156,6 +158,7 @@ router.put('/:id', operatorOrAdmin, upload.single('photo'), async (req, res) => 
     if (photo) { sql += ',photo=?'; p.push(photo); }
     sql += ' WHERE id=?'; p.push(req.params.id);
     await db.query(sql, p);
+    await logAudit(req, 'update', 'asset', req.params.id, { name, condition, status: status || 'aktif' });
     res.json({ message: 'Updated' });
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
@@ -168,6 +171,7 @@ router.delete('/:id', operatorOrAdmin, async (req, res) => {
     return res.status(403).json({ message: 'Bukan aset unit Anda' });
   }
   await db.query('DELETE FROM assets WHERE id=?', [req.params.id]);
+  await logAudit(req, 'delete', 'asset', req.params.id, { asset_code: cur.asset_code });
   removePhoto(cur.photo);
   res.json({ message: 'Dihapus' });
 });

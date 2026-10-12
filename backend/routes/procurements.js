@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../config/db');
 const { auth, adminOnly, operatorOrAdmin, scopeUnit } = require('../middleware/auth');
+const { logAudit } = require('../helpers/audit');
 const router = express.Router();
 router.use(auth());
 router.use(scopeUnit);
@@ -218,6 +219,7 @@ router.put('/items/:itemId/receive', operatorOrAdmin, async (req, res) => {
       [price, qty, vendor || i.vendor || null, r.insertId, i.id]
     );
     await recalc(i.pid);
+    await logAudit(req, 'receive', 'procurement_item', i.id, { asset_code, asset_id: r.insertId, price, qty });
 
     // Kalau semua item sudah diterima -> selesai
     const [[cnt]] = await db.query(

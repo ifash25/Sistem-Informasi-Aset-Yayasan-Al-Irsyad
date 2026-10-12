@@ -1,6 +1,8 @@
 const express = require('express');
 const db = require('../config/db');
 const { auth, adminOnly, operatorOrAdmin, scopeUnit } = require('../middleware/auth');
+const { logAudit } = require('../helpers/audit');
+const { notifyAdmins } = require('../helpers/notify');
 const router = express.Router();
 router.use(auth());
 router.use(scopeUnit);
@@ -43,8 +45,15 @@ router.post('/', operatorOrAdmin, async (req, res) => {
     if (isAdmin) {
       await db.query('UPDATE assets SET unit_id=?, location_id=? WHERE id=?', [to_unit_id, to_location_id || null, asset_id]);
       await db.query('UPDATE mutations SET approved_by=?, approved_at=NOW() WHERE id=?', [req.user.id, r.insertId]);
+      await logAudit(req, 'create', 'mutation', r.insertId, { asset_id, to_unit_id, via: 'admin_direct' });
       return res.json({ message: 'Mutasi berhasil' });
     }
+    await logAudit(req, 'create', 'mutation', r.insertId, { asset_id, to_unit_id, status: 'pending' });
+    await notifyAdmins(req.user.id, {
+      title: 'Pengajuan mutasi menunggu persetujuan',
+      message: `${req.user.name} mengajukan pemindahan aset #${asset_id} ke unit ${to_unit_id}`,
+      type: 'approval', link: '/mutasi'
+    });
     res.json({ message: 'Pengajuan mutasi dikirim, menunggu persetujuan admin' });
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
@@ -56,6 +65,7 @@ router.post('/:id/approve', adminOnly, async (req, res) => {
     if (m.status !== 'pending') return res.status(400).json({ message: 'Mutasi sudah diproses' });
     await db.query('UPDATE assets SET unit_id=?, location_id=? WHERE id=?', [m.to_unit_id, m.to_location_id, m.asset_id]);
     await db.query("UPDATE mutations SET status='approved', approved_by=?, approved_at=NOW() WHERE id=?", [req.user.id, m.id]);
+    await logAudit(req, 'approve', 'mutation', m.id, { asset_id: m.asset_id, to_unit_id: m.to_unit_id });
     res.json({ message: 'Mutasi disetujui' });
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
@@ -66,6 +76,7 @@ router.post('/:id/reject', adminOnly, async (req, res) => {
     if (!m) return res.status(404).json({ message: 'Mutasi tidak ditemukan' });
     if (m.status !== 'pending') return res.status(400).json({ message: 'Mutasi sudah diproses' });
     await db.query("UPDATE mutations SET status='rejected', approved_by=?, approved_at=NOW() WHERE id=?", [req.user.id, m.id]);
+    await logAudit(req, 'reject', 'mutation', m.id, { asset_id: m.asset_id });
     res.json({ message: 'Mutasi ditolak' });
   } catch (e) { res.status(500).json({ message: e.message }); }
 });

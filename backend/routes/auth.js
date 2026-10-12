@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
+const { logAudit } = require('../helpers/audit');
 
 const router = express.Router();
 
@@ -21,6 +22,7 @@ router.post('/login', async (req, res) => {
       process.env.JWT_SECRET || 'alirsyad_secret_2026',
       { expiresIn: '12h' }
     );
+    await logAudit({ ...req, user: { id: user.id, name: user.name, role: user.role } }, 'login', 'auth', user.id, { email: user.email });
     res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role, unit_id: user.unit_id, unit_name: user.unit_name } });
   } catch (e) {
     res.status(500).json({ message: e.message });
