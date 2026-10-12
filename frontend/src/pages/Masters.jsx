@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import api from '../api.js';
+import Icon from '../components/Icon.jsx';
 
 const emptyU = { code: '', name: '' };
-const emptyC = { code: '', name: '' };
+const emptyC = { code: '', name: '', unit_id: '' };
 const emptyL = { unit_id: '', name: '' };
 
 export default function Masters() {
@@ -72,10 +73,10 @@ export default function Masters() {
 
   return (
     <>
-      <div className="topbar"><h2>Master Data{!isAdmin && me?.unit_name ? ` — ${me.unit_name}` : ''}</h2></div>
+      <div className="topbar"><h2><Icon name="database" /> Master Data{!isAdmin && me?.unit_name ? ` — ${me.unit_name}` : ''}</h2></div>
       {err && <div className="card"><p style={{ color: 'red' }}>{err}</p></div>}
       <div className="card">
-        <h3>Unit — BPP, RQ, SD, SMP, SMK</h3>
+        <h3><Icon name="building" /> Unit — BPP, RQ, SD, SMP, SMK</h3>
         <div className="table-wrap">
         <table><thead><tr><th>Kode</th><th>Nama</th>{isAdmin && <th>Aksi</th>}</tr></thead>
         <tbody>{units.map(x => <tr key={x.id}><td>{x.code}</td><td>{x.name}</td>
@@ -97,20 +98,31 @@ export default function Masters() {
         )}
       </div>
       <div className="card">
-        <h3>Kategori</h3>
+        <h3><Icon name="database" /> Kategori</h3>
         <div className="table-wrap">
-        <table><thead><tr><th>Kode</th><th>Nama</th>{isAdmin && <th>Aksi</th>}</tr></thead>
+        <table><thead><tr><th>Kode</th><th>Nama</th><th>Unit</th>{(isAdmin || me?.role==='operator') && <th>Aksi</th>}</tr></thead>
         <tbody>{cats.map(x => <tr key={x.id}><td>{x.code}</td><td>{x.name}</td>
-          {isAdmin && <td><div className="actions">
-            <button className="secondary" onClick={() => { setEditC(x.id); setC({ code: x.code, name: x.name }); }}>Edit</button>
-            <button className="danger" onClick={() => delC(x.id)}>Hapus</button>
+          <td>{x.unit_code ? <span className="badge">{x.unit_code}</span> : 'Global'}</td>
+          {(isAdmin || me?.role==='operator') && <td><div className="actions">
+            {(isAdmin || String(x.unit_id) === String(me?.unit_id)) && <>
+              <button className="secondary" onClick={() => { setEditC(x.id); setC({ code: x.code, name: x.name }); }}>Edit</button>
+              <button className="danger" onClick={() => delC(x.id)}>Hapus</button>
+            </>}
           </div></td>}
         </tr>)}</tbody></table>
         </div>
-        {isAdmin && (
+        {(isAdmin || me?.role==='operator') && (
         <form onSubmit={submitC} style={{ marginTop: 10 }}>
           <div className="toolbar">
-            <input required placeholder="Kode" value={c.code} onChange={e => setC({ ...c, code: e.target.value })} />
+            {(isAdmin && !editC) ? (
+            <select value={c.unit_id || ''} onChange={e => setC({ ...c, unit_id: e.target.value })} title="Kosongkan untuk kategori global">
+              <option value="">Global (semua unit)</option>
+              {units.map(x => <option key={x.id} value={x.id}>{x.code}</option>)}
+            </select>
+            ) : (
+            <input value={!isAdmin ? (me?.unit_name || 'Unit Anda') : (cats.find(x=>String(x.id)===String(editC))?.unit_code || 'Global')} disabled />
+            )}
+            <input required placeholder="Kode" value={c.code} onChange={e => setC({ ...c, code: e.target.value })} maxLength={10} />
             <input required placeholder="Nama kategori" value={c.name} onChange={e => setC({ ...c, name: e.target.value })} />
             <button>{editC ? 'Update Kategori' : 'Tambah Kategori'}</button>
             {editC && <button type="button" className="secondary" onClick={() => { setEditC(null); setC(emptyC); }}>Batal</button>}
@@ -119,7 +131,7 @@ export default function Masters() {
         )}
       </div>
       <div className="card">
-        <h3>Lokasi / Ruangan</h3>
+        <h3><Icon name="box" /> Lokasi / Ruangan</h3>
         <div className="table-wrap">
         <table><thead><tr><th>Unit</th><th>Lokasi</th><th>Aksi</th></tr></thead>
         <tbody>{locs.map(x => <tr key={x.id}><td>{x.unit_code}</td><td>{x.name}</td>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api.js';
+import Icon from '../components/Icon.jsx';
 
 const empty = { name: '', email: '', password: '', role: 'operator', unit_id: '' };
 
@@ -43,7 +44,7 @@ export default function Users() {
 
   return (
     <>
-      <div className="topbar"><h2>Kelola User</h2></div>
+      <div className="topbar"><h2><Icon name="users" /> Kelola User</h2></div>
       {err && <div className="card"><p style={{ color: 'red' }}>{err}</p></div>}
       <div className="card">
         <div className="table-wrap">
@@ -62,7 +63,7 @@ export default function Users() {
         </div>
       </div>
       <div className="card">
-        <h3>{editId ? 'Edit User' : 'Tambah User'}</h3>
+        <h3><Icon name="users" /> {editId ? 'Edit User' : 'Tambah User'}</h3>
         <form onSubmit={submit}>
           <div className="form-grid">
             <input required placeholder="Nama" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />

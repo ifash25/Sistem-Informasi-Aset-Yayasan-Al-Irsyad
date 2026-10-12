@@ -62,6 +62,27 @@ router.get('/', async (req, res) => {
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
+router.get('/lookup/:code', async (req, res) => {
+  try {
+    const su = scopedUnitId(req);
+    const code = decodeURIComponent(req.params.code);
+    const baseWhere = su ? 'a.asset_code=? AND a.unit_id=?' : 'a.asset_code=?';
+    const baseParams = su ? [code, su] : [code];
+    const [rows] = await db.query(
+      `SELECT a.*, u.code as unit_code, u.name as unit_name,
+        c.name as category_name, l.name as location_name
+       FROM assets a
+       JOIN units u ON u.id=a.unit_id
+       JOIN categories c ON c.id=a.category_id
+       LEFT JOIN locations l ON l.id=a.location_id
+       WHERE ${baseWhere}`,
+      baseParams
+    );
+    if (!rows.length) return res.status(404).json({ message: 'Aset tidak ditemukan' });
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ message: e.message }); }
+});
+
 router.get('/:id', async (req, res) => {
   const su = scopedUnitId(req);
   const baseWhere = su ? 'a.id=? AND a.unit_id=?' : 'a.id=?';
@@ -94,9 +115,11 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', operatorOrAdmin, upload.single('photo'), async (req, res) => {
   try {
-    let { name, category_id, unit_id, location_id, brand, serial_number, purchase_year, purchase_price, condition, description } = req.body;
+    let { name, category_id, unit_id, location_id, brand, serial_number, purchase_year, purchase_price, condition, description } = req.body || {};
+    if (!name || !category_id) return res.status(400).json({ message: 'Nama dan kategori wajib diisi' });
     const su = scopedUnitId(req);
     if (su) unit_id = su; // operator terkunci ke unitnya
+    if (!unit_id) return res.status(400).json({ message: 'Unit wajib diisi' });
     const [[unit]] = await db.query('SELECT code FROM units WHERE id=?', [unit_id]);
     if (!unit) return res.status(400).json({ message: 'Unit tidak valid' });
     if (location_id) {

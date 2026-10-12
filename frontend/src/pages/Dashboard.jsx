@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api.js';
+import Icon from '../components/Icon.jsx';
 
 export default function Dashboard() {
   const me = JSON.parse(localStorage.getItem('user') || 'null');
@@ -21,7 +22,7 @@ export default function Dashboard() {
   if (!data) return <p>Memuat...</p>;
   return (
     <>
-      <div className="topbar"><h2>Dashboard Aset{data.scoped && me?.unit_name ? ` — ${me.unit_name}` : ''}</h2><button className="secondary" onClick={downloadCsv}>Export CSV</button></div>
+      <div className="topbar"><h2><Icon name="dashboard" /> Dashboard Aset{data.scoped && me?.unit_name ? ` — ${me.unit_name}` : ''}</h2><button className="secondary" onClick={downloadCsv}><Icon name="file" size={15} /> Export CSV</button></div>
       <div className="grid">
         <div className="stat"><small>Total Aset</small><h3>{data.total}</h3></div>
         <div className="stat" style={{background:'#1d4ed8'}}><small>Total Nilai (Rp)</small><h3>{Number(data.nilai).toLocaleString('id-ID')}</h3></div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api.js';
+import Icon from '../components/Icon.jsx';
 
 export default function Login() {
   const [email, setEmail] = useState('admin@alirsyad.sch.id');
@@ -22,6 +23,7 @@ export default function Login() {
   return (
     <div className="login-wrap">
       <form className="login-box" onSubmit={submit}>
+        <span className="login-logo"><Icon name="building" size={26} /></span>
         <h1>SI Aset Yayasan Al-Irsyad</h1>
         <p>Unit BPP • RQ • SD • SMP • SMK</p>
         <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />

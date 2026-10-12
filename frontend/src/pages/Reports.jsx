@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api.js';
+import Icon from '../components/Icon.jsx';
 
 export default function Reports() {
   const me = JSON.parse(localStorage.getItem('user') || 'null');
@@ -35,7 +36,7 @@ export default function Reports() {
 
   return (
     <>
-      <div className="topbar"><h2>Laporan Aset{isScoped ? ` — ${me.unit_name || ''}` : ''}</h2><button className="secondary" onClick={downloadCsv}>Export CSV</button></div>
+      <div className="topbar"><h2><Icon name="file" /> Laporan Aset{isScoped ? ` — ${me.unit_name || ''}` : ''}</h2><button className="secondary" onClick={downloadCsv}><Icon name="file" size={15} /> Export CSV</button></div>
       <div className="card">
         <div className="toolbar">
           {!isScoped && (

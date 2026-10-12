@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api.js';
+import Icon from '../components/Icon.jsx';
 
 const empty = { name:'', category_id:'', unit_id:'', location_id:'', brand:'', serial_number:'', purchase_year:'', purchase_price:'', condition:'baik', status:'aktif', description:'' };
 
 export default function Assets() {
   const me = JSON.parse(localStorage.getItem('user') || 'null');
+  const nav = useNavigate();
   const isScoped = me?.role !== 'admin' && !!me?.unit_id;
   const canWrite = me?.role === 'admin' || me?.role === 'operator';
   const [rows, setRows] = useState([]);
@@ -17,6 +20,8 @@ export default function Assets() {
   const [editId, setEditId] = useState(null);
   const [err, setErr] = useState('');
   const [detail, setDetail] = useState(null);
+  const [showCat, setShowCat] = useState(false);
+  const [catForm, setCatForm] = useState({ code:'', name:'' });
 
   const openDetail = async (id) => {
     setErr('');
@@ -57,6 +62,16 @@ export default function Assets() {
     } catch (e2) { setErr(e2.response?.data?.message || 'Gagal menyimpan aset'); }
   };
 
+  const addCat = async (e) => {
+    e.preventDefault(); setErr('');
+    try {
+      const { data } = await api.post('/master/categories', catForm);
+      api.get('/master/categories').then(r => setCats(r.data));
+      setForm(f => ({ ...f, category_id: data.id }));
+      setCatForm({ code:'', name:'' }); setShowCat(false);
+    } catch (e2) { setErr(e2.response?.data?.message || 'Gagal menambah kategori'); }
+  };
+
   const edit = (r) => {
     setEditId(r.id);
     setErr('');
@@ -66,7 +81,7 @@ export default function Assets() {
 
   return (
     <>
-      <div className="topbar"><h2>Data Aset{isScoped ? ` — ${me.unit_name || ''}` : ''}</h2></div>
+      <div className="topbar"><h2><Icon name="box" /> Data Aset{isScoped ? ` — ${me.unit_name || ''}` : ''}</h2><div className="topbar-actions"><button className="secondary" onClick={()=>nav('/label')}><Icon name="qr" size={15} /> Cetak Label QR</button><button className="secondary" onClick={()=>nav('/scan')}><Icon name="scan" size={15} /> Scan QR</button></div></div>
       {err && <div className="card"><p style={{color:'red'}}>{err}</p></div>}
       <div className="card">
         <div className="toolbar">
@@ -96,13 +111,28 @@ export default function Assets() {
       </div>
       {canWrite && (
       <div className="card">
-        <h3>{editId ? 'Edit Aset' : 'Tambah Aset'}</h3>
+        <h3><Icon name="box" /> {editId ? 'Edit Aset' : 'Tambah Aset'}</h3>
         <form onSubmit={submit}>
           <div className="form-grid">
             <input required placeholder="Nama aset" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} />
-            <select required value={form.category_id} onChange={e=>setForm({...form,category_id:e.target.value})}>
-              <option value="">- Kategori -</option>{cats.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            <div style={{display:'flex',gap:6}}>
+              <select required value={form.category_id} onChange={e=>setForm({...form,category_id:e.target.value})} style={{flex:1}}>
+                <option value="">- Kategori -</option>
+                {cats.map(c=><option key={c.id} value={c.id}>{c.name}{c.unit_code ? ` (${c.unit_code})` : ''}</option>)}
+              </select>
+              {canWrite && <button type="button" className="secondary" title="Tambah kategori baru" onClick={()=>setShowCat(!showCat)} style={{whiteSpace:'nowrap'}}><Icon name="plus" size={14} /> Kategori</button>}
+            </div>
+            {showCat && (
+              <div className="card" style={{gridColumn:'1 / -1',padding:10}}>
+                <form onSubmit={addCat} className="toolbar" style={{margin:0}}>
+                  <input required placeholder="Kode (ex: ELE)" value={catForm.code} onChange={e=>setCatForm({...catForm,code:e.target.value})} maxLength={10} />
+                  <input required placeholder="Nama kategori" value={catForm.name} onChange={e=>setCatForm({...catForm,name:e.target.value})} />
+                  <button>Simpan Kategori</button>
+                  <button type="button" className="secondary" onClick={()=>{setShowCat(false);setCatForm({code:'',name:''});}}>Batal</button>
+                  <span style={{fontSize:12,opacity:.7}}>{isScoped ? `Kategori milik unit ${me?.unit_name||''}` : 'Kategori global (semua unit)'}</span>
+                </form>
+              </div>
+            )}
             <select required value={form.unit_id} onChange={e=>setForm({...form,unit_id:e.target.value})} disabled={isScoped}>
               <option value="">- Unit -</option>{units.map(u=><option key={u.id} value={u.id}>{u.code}</option>)}
             </select>

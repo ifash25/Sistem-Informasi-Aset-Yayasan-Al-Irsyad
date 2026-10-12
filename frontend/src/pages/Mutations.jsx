@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api.js';
+import Icon from '../components/Icon.jsx';
 
 export default function Mutations() {
   const me = JSON.parse(localStorage.getItem('user') || 'null');
@@ -43,7 +44,7 @@ export default function Mutations() {
 
   return (
     <>
-      <div className="topbar"><h2>Mutasi & Pemeliharaan</h2></div>
+      <div className="topbar"><h2><Icon name="swap" /> Mutasi & Pemeliharaan</h2></div>
       <div className="card">
         <h3>Mutasi Aset Antar Unit</h3>
         <form onSubmit={submitMut}>
