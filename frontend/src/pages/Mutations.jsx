@@ -68,8 +68,10 @@ export default function Mutations() {
       </div>
       <div className="card">
         <h3>Riwayat Mutasi</h3>
+        <div className="table-wrap">
         <table><thead><tr><th>Tanggal</th><th>Aset</th><th>Dari</th><th>Ke</th><th>Status</th><th>Alasan</th>{isAdmin && <th>Aksi</th>}</tr></thead>
-        <tbody>{rows.map(r=><tr key={r.id}><td>{r.mutation_date?.slice(0,10)}</td><td>{r.asset_code}</td><td>{r.from_unit||'-'}</td><td>{r.to_unit}</td><td><span className="badge">{r.status || 'approved'}</span></td><td>{r.reason||''}</td>{isAdmin && <td>{r.status === 'pending' ? (<><button onClick={()=>actMut(r.id,'approve')}>Setujui</button> <button className="danger" onClick={()=>actMut(r.id,'reject')}>Tolak</button></>) : '-'}</td>}</tr>)}</tbody></table>
+        <tbody>{rows.map(r=><tr key={r.id}><td>{r.mutation_date?.slice(0,10)}</td><td>{r.asset_code}</td><td>{r.from_unit||'-'}</td><td>{r.to_unit}</td><td><span className="badge">{r.status || 'approved'}</span></td><td>{r.reason||''}</td>{isAdmin && <td><div className="actions">{r.status === 'pending' ? (<><button onClick={()=>actMut(r.id,'approve')}>Setujui</button> <button className="danger" onClick={()=>actMut(r.id,'reject')}>Tolak</button></>) : '-'}</div></td>}</tr>)}</tbody></table>
+        </div>
       </div>
       <div className="card">
         <h3>Catat Servis / Pemeliharaan</h3>
@@ -90,8 +92,10 @@ export default function Mutations() {
       </div>
       <div className="card">
         <h3>Riwayat Servis</h3>
+        <div className="table-wrap">
         <table><thead><tr><th>Tanggal</th><th>Aset</th><th>Jenis</th><th>Biaya</th><th>Vendor</th></tr></thead>
         <tbody>{servs.map(r=><tr key={r.id}><td>{r.maintenance_date?.slice(0,10)}</td><td>{r.asset_code}</td><td>{r.type}</td><td>{Number(r.cost).toLocaleString('id-ID')}</td><td>{r.vendor||''}</td></tr>)}</tbody></table>
+        </div>
       </div>
     </>
   );

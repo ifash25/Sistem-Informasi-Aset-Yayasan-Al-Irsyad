@@ -21,6 +21,15 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+function removePhoto(photoPath) {
+  if (!photoPath) return;
+  try {
+    const rel = photoPath.replace(/^\/+/, '');
+    const full = path.join(__dirname, '..', rel);
+    if (fs.existsSync(full)) fs.unlinkSync(full);
+  } catch (e) { /* abaikan */ }
+}
+
 async function genCode(unitCode) {
   const year = new Date().getFullYear();
   const [rows] = await db.query(
@@ -55,11 +64,32 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   const su = scopedUnitId(req);
-  const [rows] = su
-    ? await db.query('SELECT * FROM assets WHERE id=? AND unit_id=?', [req.params.id, su])
-    : await db.query('SELECT * FROM assets WHERE id=?', [req.params.id]);
+  const baseWhere = su ? 'a.id=? AND a.unit_id=?' : 'a.id=?';
+  const baseParams = su ? [req.params.id, su] : [req.params.id];
+  const [rows] = await db.query(
+    `SELECT a.*, u.code as unit_code, u.name as unit_name,
+      c.name as category_name, l.name as location_name
+     FROM assets a
+     JOIN units u ON u.id=a.unit_id
+     JOIN categories c ON c.id=a.category_id
+     LEFT JOIN locations l ON l.id=a.location_id
+     WHERE ${baseWhere}`,
+    baseParams
+  );
   if (!rows.length) return res.status(404).json({ message: 'Tidak ditemukan' });
-  res.json(rows[0]);
+  const asset = rows[0];
+  const [muts] = await db.query(
+    `SELECT m.*, fu.code as from_unit, tu.code as to_unit FROM mutations m
+     LEFT JOIN units fu ON fu.id=m.from_unit_id
+     JOIN units tu ON tu.id=m.to_unit_id
+     WHERE m.asset_id=? ORDER BY m.created_at DESC`,
+    [asset.id]
+  );
+  const [servs] = await db.query(
+    'SELECT * FROM maintenances WHERE asset_id=? ORDER BY maintenance_date DESC',
+    [asset.id]
+  );
+  res.json({ ...asset, mutations: muts, maintenances: servs });
 });
 
 router.post('/', operatorOrAdmin, upload.single('photo'), async (req, res) => {
@@ -94,6 +124,10 @@ router.put('/:id', operatorOrAdmin, upload.single('photo'), async (req, res) => 
       unit_id = su;
     }
     const photo = req.file ? `/uploads/${req.file.filename}` : undefined;
+    if (photo) {
+      const [[old]] = await db.query('SELECT photo FROM assets WHERE id=?', [req.params.id]);
+      if (old?.photo) removePhoto(old.photo);
+    }
     let sql = 'UPDATE assets SET name=?,category_id=?,unit_id=?,location_id=?,brand=?,serial_number=?,purchase_year=?,purchase_price=?,`condition`=?,status=?,description=?';
     const p = [name, category_id, unit_id, location_id || null, brand, serial_number, purchase_year || null, purchase_price || 0, condition, status || 'aktif', description];
     if (photo) { sql += ',photo=?'; p.push(photo); }
@@ -105,11 +139,13 @@ router.put('/:id', operatorOrAdmin, upload.single('photo'), async (req, res) => 
 
 router.delete('/:id', operatorOrAdmin, async (req, res) => {
   const su = scopedUnitId(req);
-  if (su) {
-    const [[cur]] = await db.query('SELECT unit_id FROM assets WHERE id=?', [req.params.id]);
-    if (!cur || String(cur.unit_id) !== String(su)) return res.status(403).json({ message: 'Bukan aset unit Anda' });
+  const [[cur]] = await db.query('SELECT unit_id, photo FROM assets WHERE id=?', [req.params.id]);
+  if (!cur) return res.status(404).json({ message: 'Tidak ditemukan' });
+  if (su && String(cur.unit_id) !== String(su)) {
+    return res.status(403).json({ message: 'Bukan aset unit Anda' });
   }
   await db.query('DELETE FROM assets WHERE id=?', [req.params.id]);
+  removePhoto(cur.photo);
   res.json({ message: 'Dihapus' });
 });
 

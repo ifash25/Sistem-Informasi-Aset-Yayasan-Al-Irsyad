@@ -61,6 +61,7 @@ export default function Reports() {
         <p>Jumlah: <b>{rows.length}</b> aset — Total nilai: <b>Rp {totalNilai.toLocaleString('id-ID')}</b></p>
       </div>
       <div className="card">
+        <div className="table-wrap">
         <table>
           <thead><tr><th>Kode</th><th>Nama</th><th>Unit</th><th>Lokasi</th><th>Kategori</th><th>Kondisi</th><th>Harga</th></tr></thead>
           <tbody>{rows.map(r => <tr key={r.id}>
@@ -69,6 +70,7 @@ export default function Reports() {
             <td>{Number(r.purchase_price).toLocaleString('id-ID')}</td>
           </tr>)}</tbody>
         </table>
+        </div>
       </div>
     </>
   );

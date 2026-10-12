@@ -6,6 +6,7 @@ const empty = { name:'', category_id:'', unit_id:'', location_id:'', brand:'', s
 export default function Assets() {
   const me = JSON.parse(localStorage.getItem('user') || 'null');
   const isScoped = me?.role !== 'admin' && !!me?.unit_id;
+  const canWrite = me?.role === 'admin' || me?.role === 'operator';
   const [rows, setRows] = useState([]);
   const [units, setUnits] = useState([]);
   const [cats, setCats] = useState([]);
@@ -15,6 +16,15 @@ export default function Assets() {
   const [photo, setPhoto] = useState(null);
   const [editId, setEditId] = useState(null);
   const [err, setErr] = useState('');
+  const [detail, setDetail] = useState(null);
+
+  const openDetail = async (id) => {
+    setErr('');
+    try {
+      const { data } = await api.get('/assets/' + id);
+      setDetail(data);
+    } catch (e) { setErr(e.response?.data?.message || 'Gagal memuat detail aset'); }
+  };
 
   const load = async () => {
     const q = new URLSearchParams();
@@ -69,16 +79,22 @@ export default function Assets() {
           <input placeholder="Cari nama/kode/merk" value={filter.search} onChange={e=>setFilter({...filter,search:e.target.value})} />
           <button onClick={load}>Filter</button>
         </div>
+        <div className="table-wrap">
         <table>
           <thead><tr><th>Foto</th><th>Kode</th><th>Nama</th><th>Unit</th><th>Kategori</th><th>Kondisi</th><th>Harga</th><th>Aksi</th></tr></thead>
           <tbody>{rows.map(r=><tr key={r.id}>
-            <td>{r.photo ? <img src={'http://localhost:5000' + r.photo} alt="" style={{width:48,height:36,objectFit:'cover',borderRadius:6}} /> : '-'}</td>
-            <td>{r.asset_code}</td><td>{r.name}</td><td><span className="badge">{r.unit_code}</span></td>
+            <td>{r.photo ? <img className="thumb" src={r.photo} alt="" onClick={()=>openDetail(r.id)} /> : '-'}</td>
+            <td><span className="clickable" onClick={()=>openDetail(r.id)}>{r.asset_code}</span></td><td>{r.name}</td><td><span className="badge">{r.unit_code}</span></td>
             <td>{r.category_name}</td><td>{r.condition}</td><td>{Number(r.purchase_price).toLocaleString('id-ID')}</td>
-            <td><button className="secondary" onClick={()=>edit(r)}>Edit</button> <button className="danger" onClick={()=>del(r.id)}>Hapus</button></td>
+            <td><div className="actions">
+              <button className="info" onClick={()=>openDetail(r.id)}>Detail</button>
+              {canWrite && <><button className="secondary" onClick={()=>edit(r)}>Edit</button><button className="danger" onClick={()=>del(r.id)}>Hapus</button></>}
+            </div></td>
           </tr>)}</tbody>
         </table>
+        </div>
       </div>
+      {canWrite && (
       <div className="card">
         <h3>{editId ? 'Edit Aset' : 'Tambah Aset'}</h3>
         <form onSubmit={submit}>
@@ -111,6 +127,57 @@ export default function Assets() {
           <div style={{marginTop:8}}><button>{editId?'Update':'Simpan'}</button> {editId&&<button type="button" className="secondary" onClick={()=>{setEditId(null);setForm(empty);}}>Batal</button>}</div>
         </form>
       </div>
+      )}
+      {detail && (
+      <div className="modal-backdrop" onClick={()=>setDetail(null)}>
+        <div className="modal" onClick={e=>e.stopPropagation()}>
+          <div className="modal-head">
+            <h3>Detail Aset — {detail.asset_code}</h3>
+            <button className="secondary" onClick={()=>setDetail(null)}>Tutup</button>
+          </div>
+          <div className="detail-grid">
+            <div>{detail.photo ? <img src={detail.photo} alt="" /> : <p>Tidak ada foto</p>}</div>
+            <dl className="kv">
+              <dt>Nama</dt><dd>{detail.name}</dd>
+              <dt>Kode</dt><dd>{detail.asset_code}</dd>
+              <dt>Unit</dt><dd>{detail.unit_code} — {detail.unit_name}</dd>
+              <dt>Kategori</dt><dd>{detail.category_name}</dd>
+              <dt>Lokasi</dt><dd>{detail.location_name || '-'}</dd>
+              <dt>Merk</dt><dd>{detail.brand || '-'}</dd>
+              <dt>Serial</dt><dd>{detail.serial_number || '-'}</dd>
+              <dt>Tahun beli</dt><dd>{detail.purchase_year || '-'}</dd>
+              <dt>Harga</dt><dd>Rp {Number(detail.purchase_price || 0).toLocaleString('id-ID')}</dd>
+              <dt>Kondisi</dt><dd>{detail.condition}</dd>
+              <dt>Status</dt><dd>{detail.status}</dd>
+              <dt>Deskripsi</dt><dd>{detail.description || '-'}</dd>
+            </dl>
+          </div>
+          <div style={{marginTop:14}}>
+            <h4>Riwayat Mutasi</h4>
+            {detail.mutations?.length ? (
+            <div className="table-wrap"><table>
+              <thead><tr><th>Tanggal</th><th>Dari</th><th>Ke</th><th>Status</th></tr></thead>
+              <tbody>{detail.mutations.map(m=><tr key={m.id}><td>{m.mutation_date?.slice(0,10)}</td><td>{m.from_unit || '-'}</td><td>{m.to_unit}</td><td>{m.status}</td></tr>)}</tbody>
+            </table></div>
+            ) : <p>- Belum ada mutasi -</p>}
+          </div>
+          <div style={{marginTop:10}}>
+            <h4>Riwayat Servis</h4>
+            {detail.maintenances?.length ? (
+            <div className="table-wrap"><table>
+              <thead><tr><th>Tanggal</th><th>Jenis</th><th>Biaya</th><th>Vendor</th></tr></thead>
+              <tbody>{detail.maintenances.map(s=><tr key={s.id}><td>{s.maintenance_date?.slice(0,10)}</td><td>{s.type}</td><td>{Number(s.cost || 0).toLocaleString('id-ID')}</td><td>{s.vendor || '-'}</td></tr>)}</tbody>
+            </table></div>
+            ) : <p>- Belum ada servis -</p>}
+          </div>
+          {canWrite && (
+          <div style={{marginTop:12}}>
+            <button className="secondary" onClick={()=>{edit(detail);setDetail(null);window.scrollTo(0, document.body.scrollHeight);}}>Edit Aset Ini</button>
+          </div>
+          )}
+        </div>
+      </div>
+      )}
     </>
   );
 }

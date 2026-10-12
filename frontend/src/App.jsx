@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Routes, Route, NavLink, useNavigate, Navigate } from 'react-router-dom';
 import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
@@ -9,26 +10,36 @@ import Reports from './pages/Reports.jsx';
 
 function Shell({ children }) {
   const nav = useNavigate();
+  const [open, setOpen] = useState(false);
   const user = JSON.parse(localStorage.getItem('user') || 'null');
   const logout = () => { localStorage.clear(); nav('/login'); };
   const unitLabel = user?.unit_name ? ` - ${user.unit_name}` : (user?.role === 'admin' ? ' - Semua Unit' : '');
+  const close = () => setOpen(false);
   return (
+    <>
+    <div className="mobilebar">
+      <button className="hamburger" onClick={() => setOpen(true)} aria-label="Buka menu">☰</button>
+      <strong>SI Aset Al-Irsyad</strong>
+    </div>
     <div className="layout">
-      <aside className="sidebar">
+      {open && <button className="scrim" onClick={close} aria-label="Tutup menu" />}
+      <aside className={`sidebar${open ? ' open' : ''}`}>
         <h2>SI Aset Al-Irsyad</h2>
         <small>{user?.name} ({user?.role}{unitLabel})</small>
         <div style={{height:12}} />
+        <nav onClick={close}>
         <NavLink to="/" end>Dashboard</NavLink>
         <NavLink to="/aset">Data Aset</NavLink>
         <NavLink to="/mutasi">Mutasi & Servis</NavLink>
         <NavLink to="/laporan">Laporan</NavLink>
         <NavLink to="/master">Master Data</NavLink>
         {user?.role === 'admin' && <NavLink to="/users">Users</NavLink>}
-        <div style={{flex:1}} />
-        <button className="secondary" onClick={logout}>Logout</button>
+        </nav>
+        <button className="secondary logout-btn" onClick={logout}>Logout</button>
       </aside>
       <div className="main">{children}</div>
     </div>
+    </>
   );
 }
 

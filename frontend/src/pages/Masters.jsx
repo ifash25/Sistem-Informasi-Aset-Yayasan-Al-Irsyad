@@ -76,13 +76,15 @@ export default function Masters() {
       {err && <div className="card"><p style={{ color: 'red' }}>{err}</p></div>}
       <div className="card">
         <h3>Unit — BPP, RQ, SD, SMP, SMK</h3>
+        <div className="table-wrap">
         <table><thead><tr><th>Kode</th><th>Nama</th>{isAdmin && <th>Aksi</th>}</tr></thead>
         <tbody>{units.map(x => <tr key={x.id}><td>{x.code}</td><td>{x.name}</td>
-          {isAdmin && <td>
-            <button className="secondary" onClick={() => { setEditU(x.id); setU({ code: x.code, name: x.name }); }}>Edit</button>{' '}
+          {isAdmin && <td><div className="actions">
+            <button className="secondary" onClick={() => { setEditU(x.id); setU({ code: x.code, name: x.name }); }}>Edit</button>
             <button className="danger" onClick={() => delU(x.id)}>Hapus</button>
-          </td>}
+          </div></td>}
         </tr>)}</tbody></table>
+        </div>
         {isAdmin && (
         <form onSubmit={submitU} style={{ marginTop: 10 }}>
           <div className="toolbar">
@@ -96,13 +98,15 @@ export default function Masters() {
       </div>
       <div className="card">
         <h3>Kategori</h3>
+        <div className="table-wrap">
         <table><thead><tr><th>Kode</th><th>Nama</th>{isAdmin && <th>Aksi</th>}</tr></thead>
         <tbody>{cats.map(x => <tr key={x.id}><td>{x.code}</td><td>{x.name}</td>
-          {isAdmin && <td>
-            <button className="secondary" onClick={() => { setEditC(x.id); setC({ code: x.code, name: x.name }); }}>Edit</button>{' '}
+          {isAdmin && <td><div className="actions">
+            <button className="secondary" onClick={() => { setEditC(x.id); setC({ code: x.code, name: x.name }); }}>Edit</button>
             <button className="danger" onClick={() => delC(x.id)}>Hapus</button>
-          </td>}
+          </div></td>}
         </tr>)}</tbody></table>
+        </div>
         {isAdmin && (
         <form onSubmit={submitC} style={{ marginTop: 10 }}>
           <div className="toolbar">
@@ -116,13 +120,15 @@ export default function Masters() {
       </div>
       <div className="card">
         <h3>Lokasi / Ruangan</h3>
+        <div className="table-wrap">
         <table><thead><tr><th>Unit</th><th>Lokasi</th><th>Aksi</th></tr></thead>
         <tbody>{locs.map(x => <tr key={x.id}><td>{x.unit_code}</td><td>{x.name}</td>
-          <td>
-            <button className="secondary" onClick={() => { setEditL(x.id); setL({ unit_id: x.unit_id, name: x.name }); }}>Edit</button>{' '}
+          <td><div className="actions">
+            <button className="secondary" onClick={() => { setEditL(x.id); setL({ unit_id: x.unit_id, name: x.name }); }}>Edit</button>
             <button className="danger" onClick={() => delL(x.id)}>Hapus</button>
-          </td>
+          </div></td>
         </tr>)}</tbody></table>
+        </div>
         <form onSubmit={submitL} style={{ marginTop: 10 }}>
           <div className="toolbar">
             {(isAdmin && !editL) ? (

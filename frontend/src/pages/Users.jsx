@@ -46,18 +46,20 @@ export default function Users() {
       <div className="topbar"><h2>Kelola User</h2></div>
       {err && <div className="card"><p style={{ color: 'red' }}>{err}</p></div>}
       <div className="card">
+        <div className="table-wrap">
         <table>
           <thead><tr><th>Nama</th><th>Email</th><th>Role</th><th>Unit</th><th>Aksi</th></tr></thead>
           <tbody>{rows.map(r => <tr key={r.id}>
             <td>{r.name}</td><td>{r.email}</td>
             <td><span className="badge">{r.role}</span></td>
             <td>{r.unit_code || '-'}</td>
-            <td>
-              <button className="secondary" onClick={() => edit(r)}>Edit</button>{' '}
+            <td><div className="actions">
+              <button className="secondary" onClick={() => edit(r)}>Edit</button>
               <button className="danger" onClick={() => del(r.id)}>Hapus</button>
-            </td>
+            </div></td>
           </tr>)}</tbody>
         </table>
+        </div>
       </div>
       <div className="card">
         <h3>{editId ? 'Edit User' : 'Tambah User'}</h3>

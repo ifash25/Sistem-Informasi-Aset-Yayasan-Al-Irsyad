@@ -28,8 +28,10 @@ export default function Dashboard() {
       </div>
       <div className="card">
         <h3>Per Unit (BPP, RQ, SD, SMP, SMK)</h3>
+        <div className="table-wrap">
         <table><thead><tr><th>Kode</th><th>Unit</th><th>Jumlah</th><th>Nilai (Rp)</th></tr></thead>
         <tbody>{data.perUnit.map(u => <tr key={u.code}><td>{u.code}</td><td>{u.name}</td><td>{u.jumlah}</td><td>{Number(u.nilai).toLocaleString('id-ID')}</td></tr>)}</tbody></table>
+        </div>
       </div>
       <div className="card">
         <h3>Kondisi Aset</h3>
@@ -37,8 +39,10 @@ export default function Dashboard() {
       </div>
       <div className="card">
         <h3>Aset Terbaru</h3>
+        <div className="table-wrap">
         <table><thead><tr><th>Kode</th><th>Nama</th><th>Unit</th></tr></thead>
         <tbody>{data.recent.map((r,i) => <tr key={i}><td>{r.asset_code}</td><td>{r.name}</td><td>{r.unit_code}</td></tr>)}</tbody></table>
+        </div>
       </div>
     </>
   );
