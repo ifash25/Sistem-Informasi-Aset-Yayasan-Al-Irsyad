@@ -11,6 +11,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.get('/', (req, res) => res.json({ message: 'API Sistem Informasi Aset Yayasan Al-Irsyad' }));
 
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/users', require('./routes/users'));
 app.use('/api/master', require('./routes/master'));
 app.use('/api/assets', require('./routes/assets'));
 app.use('/api/mutations', require('./routes/mutations'));

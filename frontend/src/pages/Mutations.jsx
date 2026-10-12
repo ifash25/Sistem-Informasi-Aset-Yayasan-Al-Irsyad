@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import api from '../api.js';
 
 export default function Mutations() {
+  const me = JSON.parse(localStorage.getItem('user') || 'null');
+  const isAdmin = me?.role === 'admin';
   const [rows, setRows] = useState([]);
   const [assets, setAssets] = useState([]);
   const [units, setUnits] = useState([]);
@@ -21,8 +23,15 @@ export default function Mutations() {
 
   const submitMut = async (ev) => {
     ev.preventDefault();
-    await api.post('/mutations', m);
+    const { data } = await api.post('/mutations', m);
+    alert(data.message || 'Tersimpan');
     setM({ asset_id:'', to_unit_id:'', to_location_id:'', mutation_date:'', reason:'' });
+    load();
+  };
+  const actMut = async (id, act) => {
+    if (!confirm(act === 'approve' ? 'Setujui mutasi ini?' : 'Tolak mutasi ini?')) return;
+    const { data } = await api.post(`/mutations/${id}/${act}`);
+    alert(data.message);
     load();
   };
   const submitServ = async (ev) => {
@@ -59,8 +68,8 @@ export default function Mutations() {
       </div>
       <div className="card">
         <h3>Riwayat Mutasi</h3>
-        <table><thead><tr><th>Tanggal</th><th>Aset</th><th>Dari</th><th>Ke</th><th>Alasan</th></tr></thead>
-        <tbody>{rows.map(r=><tr key={r.id}><td>{r.mutation_date?.slice(0,10)}</td><td>{r.asset_code}</td><td>{r.from_unit||'-'}</td><td>{r.to_unit}</td><td>{r.reason||''}</td></tr>)}</tbody></table>
+        <table><thead><tr><th>Tanggal</th><th>Aset</th><th>Dari</th><th>Ke</th><th>Status</th><th>Alasan</th>{isAdmin && <th>Aksi</th>}</tr></thead>
+        <tbody>{rows.map(r=><tr key={r.id}><td>{r.mutation_date?.slice(0,10)}</td><td>{r.asset_code}</td><td>{r.from_unit||'-'}</td><td>{r.to_unit}</td><td><span className="badge">{r.status || 'approved'}</span></td><td>{r.reason||''}</td>{isAdmin && <td>{r.status === 'pending' ? (<><button onClick={()=>actMut(r.id,'approve')}>Setujui</button> <button className="danger" onClick={()=>actMut(r.id,'reject')}>Tolak</button></>) : '-'}</td>}</tr>)}</tbody></table>
       </div>
       <div className="card">
         <h3>Catat Servis / Pemeliharaan</h3>

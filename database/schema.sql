@@ -63,12 +63,16 @@ CREATE TABLE IF NOT EXISTS mutations (
   to_location_id INT NULL,
   mutation_date DATE NOT NULL,
   reason TEXT NULL,
+  status ENUM('pending','approved','rejected') DEFAULT 'approved',
+  approved_by INT NULL,
+  approved_at TIMESTAMP NULL,
   created_by INT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE,
   FOREIGN KEY (from_unit_id) REFERENCES units(id) ON DELETE SET NULL,
   FOREIGN KEY (to_unit_id) REFERENCES units(id),
-  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS maintenances (
